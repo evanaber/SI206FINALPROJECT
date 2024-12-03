@@ -2,9 +2,20 @@ import requests
 import json
 import matplotlib
 import re
+import sqlite3
+import os
+
+def set_up_fb_db(db_name):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + "/" + db_name)
+    cur = conn.cursor()
+    return cur, conn
 
 uri = 'https://api.football-data.org/v4/competitions'
 headers = { 'X-Auth-Token': 'c13b0efbe1df4ac68a950a03595a03c0' }
+
+cur, conn = set_up_fb_db("fb_scores.db")
+
 
 response = requests.get(uri, headers=headers)
 competitions = response.json().get('competitions', [])
@@ -27,8 +38,6 @@ for match in responses['matches']:
     homeScore = match['score']['fullTime']['home']
     awayScore = match['score']['fullTime']['away']
     total_score = int(homeScore) + int(awayScore)
-    print(f"Date: {date}, Home score: {homeScore}, Away score: {awayScore}, Total Goals Scored: {total_score}")
-    print("---------------------------------")
 
 #get match
 #get date and score from match
