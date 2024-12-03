@@ -22,8 +22,11 @@ competitions = response.json().get('competitions', [])
 for competition in competitions:
     if competition['name'] == 'Premier League':
         pleague_id = competition['id']
+        print(pleague_id)
 
+#should I make a function to change the date on this to get different data each time I call it?
 urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-23&dateTo=2024-12-01'
+#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-13&dateTo=2024-11-23'
 
 response = requests.get(urid, headers=headers)
 responses = response.json()
@@ -35,7 +38,7 @@ cur.execute(
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Scores (date INTEGER, t_score INTEGER)"
 )
-
+print("before match loop")
 for match in responses['matches']:
     #gets date
     date_pattern = r"\d{4}-\d{2}-\d{2}"
@@ -50,12 +53,14 @@ for match in responses['matches']:
     #sees if date has already been accessed
     cur.execute('SELECT id from Date_Keys WHERE date = ?', (date,))
     #if not
+    #dates are not updating for some reason
     if cur.fetchone() is None:
         #add date to table
         cur.execute(
             "INSERT INTO Date_Keys (date) VALUES (?)",
             (date,)
         )
+        print(f"should have updated")
         cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
         date_id = cur.fetchone()[0]
         #start adding to scores table
@@ -73,6 +78,7 @@ for match in responses['matches']:
         cur.execute("UPDATE Scores SET t_score = ? WHERE date = ?",(updated_score, dateid))
         #update the total goals scored for that day
     conn.commit()
+    
 
     
 #how should I limit to 25?
