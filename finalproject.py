@@ -58,7 +58,6 @@ for match in responses['matches']:
         )
         cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
         date_id = cur.fetchone()[0]
-        print(f"Inserted date: {date}, id: {date_id}")  # Debugging line
         #start adding to scores table
         cur.execute(
             "INSERT INTO Scores (date, t_score) VALUES (?,?)",
@@ -66,10 +65,13 @@ for match in responses['matches']:
         )
         conn.commit()
     else:
+        cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
+        dateid = cur.fetchone()[0]
+        cur.execute('SELECT t_score FROM Scores WHERE date = ?', (dateid,))
+        c_score = cur.fetchone()[0]
+        updated_score = int(c_score) + total_score
+        cur.execute("UPDATE Scores SET t_score = ? WHERE date = ?",(updated_score, dateid))
         #update the total goals scored for that day
-        print(f"Date already exists: {date}")  # Debugging line
-
-        pass
     conn.commit()
 
     
