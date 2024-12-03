@@ -24,7 +24,7 @@ for competition in competitions:
         pleague_id = competition['id']
 
 #should I make a function to change the date on this to get different data each time I call it?
-urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}'
+urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-23&dateTo=2024-12-01'
 #urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-13&dateTo=2024-11-23'
 
 response = requests.get(urid, headers=headers)
@@ -37,8 +37,8 @@ cur.execute(
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Scores (date INTEGER, t_score INTEGER)"
 )
+
 for match in responses['matches']:
-    print(match)
     #gets date
     date_pattern = r"\d{4}-\d{2}-\d{2}"
     date = match["utcDate"]
@@ -80,6 +80,28 @@ for match in responses['matches']:
     conn.commit()
     
 #make dictionary to set home team equal to location (city name)
+team_loc = {
+    'Arsenal':'London',
+    'Aston Villa':'Birmingham',
+    'Bournemouth':'Bournemouth',
+    'Brentford':'London',
+    'Brighton & Hove Albion':'Brighton',
+    'Chelsea':'London',
+    'Crystal Palace':'London',
+    'Everton':'Liverpool',
+    'Fulham':'London',
+    'Ipswich Town':'Ipswich',
+    'Leicester City':'Leicester',
+    'Liverpool':'Liverpool',
+    'Manchester City':'Manchester',
+    'Manchester United':'Trafford',
+    'Newcastle United':'Newcastle upon Tyne',
+    'Nottingham Forest':'West Bridgford',
+    'Southampton':'Southampton',
+    'Tottenham Hotspur':'London',
+    'West Ham United':'London',
+    'Wolverhampton Wanderers':'Wolverhampton',
+}
     
 #how should I limit to 25?
 
