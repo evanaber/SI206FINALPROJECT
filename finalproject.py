@@ -22,10 +22,9 @@ competitions = response.json().get('competitions', [])
 for competition in competitions:
     if competition['name'] == 'Premier League':
         pleague_id = competition['id']
-        print(pleague_id)
 
 #should I make a function to change the date on this to get different data each time I call it?
-urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-23&dateTo=2024-12-01'
+urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}'
 #urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-13&dateTo=2024-11-23'
 
 response = requests.get(urid, headers=headers)
@@ -38,8 +37,8 @@ cur.execute(
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Scores (date INTEGER, t_score INTEGER)"
 )
-print("before match loop")
 for match in responses['matches']:
+    print(match)
     #gets date
     date_pattern = r"\d{4}-\d{2}-\d{2}"
     date = match["utcDate"]
@@ -70,6 +69,7 @@ for match in responses['matches']:
         )
         conn.commit()
     else:
+
         cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
         dateid = cur.fetchone()[0]
         cur.execute('SELECT t_score FROM Scores WHERE date = ?', (dateid,))
@@ -79,7 +79,7 @@ for match in responses['matches']:
         #update the total goals scored for that day
     conn.commit()
     
-
+#make dictionary to set home team equal to location (city name)
     
 #how should I limit to 25?
 
