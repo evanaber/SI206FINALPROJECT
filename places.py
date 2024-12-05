@@ -5,34 +5,26 @@ import sqlite3
 API_KEY = 'AIzaSyA1lp0cMVLR6lUM6k_IAR_E16PYu33XEkc'
 
 DATABASE = 'fb_scores.db'
-TABLE_NAME = 'Loc_Keys'
+LOC_KEYS_TABLE = 'Loc_Keys'
+SCORES_TABLE = 'Scores'
+NEW_TABLE = 'Game_Locations'
 
-#hello
 
 def setup_database():
-    """Add latitude and longitude columns to Loc_Keys table if not already present."""
+    """Ensure the new table exists."""
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    # Attempt to add 'latitude' column
-    try:
-        cursor.execute(f"ALTER TABLE {TABLE_NAME} ADD COLUMN latitude REAL")
-        print(f"Added 'latitude' column to '{TABLE_NAME}' table.")
-    except sqlite3.OperationalError as e:
-        if 'duplicate column name' in str(e).lower():
-            print(f"'latitude' column already exists in '{TABLE_NAME}' table.")
-        else:
-            print(f"Error adding 'latitude' column: {e}")
-
-    # Attempt to add 'longitude' column
-    try:
-        cursor.execute(f"ALTER TABLE {TABLE_NAME} ADD COLUMN longitude REAL")
-        print(f"Added 'longitude' column to '{TABLE_NAME}' table.")
-    except sqlite3.OperationalError as e:
-        if 'duplicate column name' in str(e).lower():
-            print(f"'longitude' column already exists in '{TABLE_NAME}' table.")
-        else:
-            print(f"Error adding 'longitude' column: {e}")
+    # Create new table for game locations
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS {NEW_TABLE} (
+            game_num INTEGER PRIMARY KEY,
+            date_id INTEGER,
+            latitude REAL,
+            longitude REAL
+        )
+    ''')
+    print(f"'{NEW_TABLE}' table is ready.")
 
     conn.commit()
     conn.close()
@@ -64,55 +56,48 @@ def get_coordinates(city_name):
         return None, None
 
 
-def update_coordinates(city_id, latitude, longitude):
-    """Update latitude and longitude for a city in the Loc_Keys table."""
+def process_game_locations():
+    """Create game locations with latitude and longitude."""
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
+    # Fetch data from Scores and Loc_Keys tables
     cursor.execute(f'''
-        UPDATE {TABLE_NAME}
-        SET latitude = ?, longitude = ?
-        WHERE id = ?
-    ''', (latitude, longitude, city_id))
-
-    conn.commit()
-    conn.close()
-
-
-def process_cities():
-    """Fetch and update coordinates for cities without latitude/longitude."""
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    # Fetch cities without coordinates
-    cursor.execute(f'''
-        SELECT id, location FROM {TABLE_NAME}
-        WHERE latitude IS NULL OR longitude IS NULL
+        SELECT s.game_num, s.date, l.location
+        FROM {SCORES_TABLE} s
+        JOIN {LOC_KEYS_TABLE} l ON s.location = l.id
     ''')
-    cities = cursor.fetchall()
-    conn.close()
+    games = cursor.fetchall()
 
-    if not cities:
-        print("All cities already have coordinates.")
+    if not games:
+        print("No game data found.")
+        conn.close()
         return
 
-    print(f"Processing {len(cities)} cities...")
-
-    for city_id, city_name in cities:
+    # Process and fetch coordinates for each game
+    for game_num, date_id, city_name in games:
         print(f"Fetching coordinates for '{city_name}'...")
         latitude, longitude = get_coordinates(city_name)
 
         if latitude is not None and longitude is not None:
-            update_coordinates(city_id, latitude, longitude)
-            print(f"Stored '{city_name}' with coordinates ({latitude}, {longitude})\n")
+            # Insert data into the new table
+            cursor.execute(f'''
+                INSERT OR REPLACE INTO {NEW_TABLE} (game_num, date_id, latitude, longitude)
+                VALUES (?, ?, ?, ?)
+            ''', (game_num, date_id, latitude, longitude))
+            print(f"Stored game {game_num} with coordinates ({latitude}, {longitude})\n")
         else:
             print(f"Failed to get coordinates for '{city_name}'.\n")
+
+    conn.commit()
+    print(f"Processed {len(games)} game locations.")
+    conn.close()
 
 
 def main():
     """Main entry point."""
-    setup_database()
-    process_cities()
+    setup_database()  # Ensure the new table exists
+    process_game_locations()  # Populate the new game locations table
 
 
 if __name__ == "__main__":
