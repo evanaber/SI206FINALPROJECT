@@ -1,70 +1,104 @@
+import os
 import requests
 import sqlite3
 
-# Google Places API key
 API_KEY = 'AIzaSyA1lp0cMVLR6lUM6k_IAR_E16PYu33XEkc'
 
-# Create SQLite database and table
-def setup_coor_database():
-    conn = sqlite3.connect('soccer_arenas.db')
+DATABASE = 'fb_scores.db'
+LOC_KEYS_TABLE = 'Loc_Keys'
+SCORES_TABLE = 'Scores'
+NEW_TABLE = 'Game_Locations'
+
+
+def setup_database():
+    """Ensure the new table exists."""
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS SoccerArenas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
+
+    # Create new table for game locations
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS {NEW_TABLE} (
+            game_num INTEGER PRIMARY KEY,
+            date_id INTEGER,
             latitude REAL,
             longitude REAL
         )
     ''')
+    print(f"'{NEW_TABLE}' table is ready.")
+
     conn.commit()
     conn.close()
 
-# Function to get latitude and longitude using Google Places API
-def get_coordinates(arena_name):
-    url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+
+def get_coordinates(city_name):
+    """Fetch coordinates for a city using Google Places API."""
+    url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
     params = {
-        'input': arena_name,
+        'input': city_name,
         'inputtype': 'textquery',
         'fields': 'geometry',
         'key': API_KEY
     }
-    response = requests.get(url, params=params)
-    data = response.json()
 
-    if data['status'] == 'OK':
-        location = data['candidates'][0]['geometry']['location']
-        return location['lat'], location['lng']
-    else:
-        print(f"Error fetching data for {arena_name}: {data['status']}")
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data['status'] == 'OK' and data['candidates']:
+            location = data['candidates'][0]['geometry']['location']
+            return location['lat'], location['lng']
+        else:
+            print(f"Error fetching data for '{city_name}': {data.get('status', 'No status')}")
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Request exception for '{city_name}': {e}")
         return None, None
 
-# Function to store arena data in the database
-def store_in_database(arena_name, latitude, longitude):
-    conn = sqlite3.connect('soccer_arenas.db')
+
+def process_game_locations():
+    """Create game locations with latitude and longitude."""
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO SoccerArenas (name, latitude, longitude)
-        VALUES (?, ?, ?)
-    ''', (arena_name, latitude, longitude))
+
+    # Fetch data from Scores and Loc_Keys tables
+    cursor.execute(f'''
+        SELECT s.game_num, s.date, l.location
+        FROM {SCORES_TABLE} s
+        JOIN {LOC_KEYS_TABLE} l ON s.location = l.id
+    ''')
+    games = cursor.fetchall()
+
+    if not games:
+        print("No game data found.")
+        conn.close()
+        return
+
+    # Process and fetch coordinates for each game
+    for game_num, date_id, city_name in games:
+        print(f"Fetching coordinates for '{city_name}'...")
+        latitude, longitude = get_coordinates(city_name)
+
+        if latitude is not None and longitude is not None:
+            # Insert data into the new table
+            cursor.execute(f'''
+                INSERT OR REPLACE INTO {NEW_TABLE} (game_num, date_id, latitude, longitude)
+                VALUES (?, ?, ?, ?)
+            ''', (game_num, date_id, latitude, longitude))
+            print(f"Stored game {game_num} with coordinates ({latitude}, {longitude})\n")
+        else:
+            print(f"Failed to get coordinates for '{city_name}'.\n")
+
     conn.commit()
+    print(f"Processed {len(games)} game locations.")
     conn.close()
 
-# Main function to process arena names
+
 def main():
-    setup_coor_database()
-    print("Enter soccer arena names (type 'exit' to finish):")
+    """Main entry point."""
+    setup_database()  # Ensure the new table exists
+    process_game_locations()  # Populate the new game locations table
 
-    while True:
-        arena_name = input("Arena Name: ")
-        if arena_name.lower() == 'exit':
-            break
-
-        latitude, longitude = get_coordinates(arena_name)
-        if latitude is not None and longitude is not None:
-            store_in_database(arena_name, latitude, longitude)
-            print(f"Stored {arena_name} with coordinates ({latitude}, {longitude})")
-        else:
-            print(f"Failed to get coordinates for {arena_name}")
 
 if __name__ == "__main__":
     main()

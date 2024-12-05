@@ -32,14 +32,6 @@ def set_api(link):
     responses = response.json()
     return responses
 
-#are we not supposed to use these?
-
-cur.execute(
-   'DROP TABLE Date_Keys'
-)
-cur.execute(
-   'DROP TABLE Scores'
-)
 
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)"
