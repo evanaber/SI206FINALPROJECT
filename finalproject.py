@@ -33,17 +33,22 @@ def set_api(link):
     return responses
 
 #are we not supposed to use these?
-#cur.execute(
-   # 'DELETE FROM Date_Keys'
-#)
-#cur.execute(
-   # 'DELETE FROM Scores'
-#)
+
+cur.execute(
+   'DROP TABLE Date_Keys'
+)
+cur.execute(
+   'DROP TABLE Scores'
+)
+
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)"
 )
 cur.execute(
-    "CREATE TABLE IF NOT EXISTS Scores (game_num INTEGER PRIMARY KEY, date INTEGER, t_score INTEGER)"
+    "CREATE TABLE IF NOT EXISTS Scores (game_num INTEGER PRIMARY KEY, date INTEGER, t_score INTEGER, location INTEGER)"
+)
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS Loc_Keys (id INTEGER PRIMARY KEY, location TEXT)"
 )
 #total score keeps getting too high because we are running the same dates over and over again. 
 #I need to access new ones and reset the database each time we run the code from the beginning
@@ -51,6 +56,7 @@ cur.execute(
 
 # call it with different dates
 def find_matches(responses):
+#gets index
     cur.execute(
         'SELECT COUNT(game_num) FROM Scores'
     )
@@ -66,7 +72,7 @@ def find_matches(responses):
         date = date.group()
     #gets name of away team for location data
         homeTeam = match['homeTeam']['name']
-        venue = team_loc[homeTeam]
+        city = team_loc[homeTeam]
     #gets scores of home and away teams
         homeScore = int(match['score']['fullTime']['home'])
         awayScore = int(match['score']['fullTime']['away'])
@@ -80,12 +86,24 @@ def find_matches(responses):
             cur.execute(
                 "INSERT INTO Date_Keys (date) VALUES (?)",
                 (date,)
-            )            
+            )        
+    #sees if location has already been accessed
+        cur.execute('SELECT id from Loc_Keys WHERE location = ?', (city,))
+    #if not
+        if cur.fetchone() is None:
+        #add location to table
+            cur.execute(
+                "INSERT INTO Loc_Keys (location) VALUES (?)",
+                (city,)
+            )    
+        #adds date, score, and location to table       
         cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
         date_id = cur.fetchone()[0]
+        cur.execute('SELECT id FROM Loc_Keys WHERE location = ?', (city,))
+        city_id = cur.fetchone()[0]
         cur.execute(
-                "INSERT INTO Scores (date, t_score) VALUES (?,?)",
-                (date_id, total_score)
+            "INSERT INTO Scores (date, t_score, location) VALUES (?,?,?)",
+                (date_id, total_score, city_id)
             )
         conn.commit()
     
