@@ -23,13 +23,6 @@ for competition in competitions:
     if competition['name'] == 'Premier League':
         pleague_id = competition['id']
 
-#should I make a function to change the date on this to get different data each time I call it?
-#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-23&dateTo=2024-12-01'
-#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-13&dateTo=2024-11-23'
-#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-23&dateTo=2024-11-01'
-#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-13&dateTo=2024-10-22'
-#urid = f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-03&dateTo=2024-10-12'
-
 #If we don't have enough dates, we could do singular matches and keep track of scores that way. Idk how far back
 #the data from the API goes.
 
@@ -58,6 +51,9 @@ cur.execute(
 
 # call it with different dates
 def find_matches(responses):
+    cur.execute(
+        'SELECT COUNT(game_num) FROM Scores'
+    )
     for match in responses['matches']:
     #gets date
         date_pattern = r"\d{4}-\d{2}-\d{2}"
