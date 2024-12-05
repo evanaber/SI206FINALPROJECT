@@ -54,17 +54,8 @@ cur.execute(
 )
 #total score keeps getting too high because we are running the same dates over and over again. 
 #I need to access new ones and reset the database each time we run the code from the beginning
-def test_dif_dates():
-    responses = set_api(f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-23&dateTo=2024-12-01')
-    find_matches(responses)
-    responses = set_api(f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-11-13&dateTo=2024-11-23')
-    find_matches(responses)
-    responses = set_api(f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-23&dateTo=2024-11-01')
-    find_matches(responses)
-    responses = set_api(f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-13&dateTo=2024-10-22')
-    find_matches(responses)
-    responses = set_api(f'https://api.football-data.org/v4/matches?competitions={pleague_id}&dateFrom=2024-10-03&dateTo=2024-10-12')
-    find_matches(responses)
+
+
 # call it with different dates
 def find_matches(responses):
     for match in responses['matches']:
@@ -96,26 +87,6 @@ def find_matches(responses):
                 "INSERT INTO Scores (date, t_score) VALUES (?,?)",
                 (date_id, total_score)
             )
-        '''
-        if 0 = 0:
-            cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
-            date_id = cur.fetchone()[0]
-        #start adding to scores table
-            cur.execute(
-                "INSERT INTO Scores (date, t_score) VALUES (?,?)",
-                (date_id, total_score)
-            )
-            conn.commit()
-        else:
-            cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
-            dateid = cur.fetchone()[0]
-            cur.execute('SELECT t_score FROM Scores WHERE date = ?', (dateid,))
-            c_score = cur.fetchone()[0] 
-            updated_score = int(c_score) + total_score
-            cur.execute("UPDATE Scores SET t_score = ? WHERE date = ?",(updated_score, dateid))
-        #update the total goals scored for that day
-        '''
-
         conn.commit()
     
 #make dictionary to set home team equal to location (city name)
@@ -125,6 +96,7 @@ team_loc = {
     'AFC Bournemouth':'Bournemouth',
     'Brentford FC':'London',
     'Brighton & Hove Albion FC':'Brighton',
+    'Burnley FC':'Burnley',
     'Chelsea FC':'London',
     'Crystal Palace FC':'London',
     'Everton FC':'Liverpool',
@@ -132,11 +104,13 @@ team_loc = {
     'Ipswich Town FC':'Ipswich',
     'Leicester City FC':'Leicester',
     'Liverpool FC':'Liverpool',
+    'Luton Town FC': 'Luton',
     'Manchester City FC':'Manchester',
     'Manchester United FC':'Trafford',
     'Newcastle United FC':'Newcastle upon Tyne',
     'Nottingham Forest FC':'West Bridgford',
     'Southampton FC':'Southampton',
+    'Sheffield United FC': 'Dronfield',
     'Tottenham Hotspur FC':'London',
     'West Ham United FC':'London',
     'Wolverhampton Wanderers FC':'Wolverhampton',
@@ -145,10 +119,9 @@ team_loc = {
 #how should I limit to 25?
 
 def main():
-   test_dif_dates()
-
-
-
+    link = f'https://api.football-data.org/v4/competitions/{pleague_id}/matches?season=2023'
+    responses = set_api(link)
+    find_matches(responses)
 
 
 if __name__ == "__main__":
