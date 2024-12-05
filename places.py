@@ -1,70 +1,118 @@
+import os
 import requests
 import sqlite3
 
-# Google Places API key
 API_KEY = 'AIzaSyA1lp0cMVLR6lUM6k_IAR_E16PYu33XEkc'
 
-# Create SQLite database and table
-def setup_coor_database():
-    conn = sqlite3.connect('soccer_arenas.db')
+DATABASE = 'fb_scores.db'
+TABLE_NAME = 'Loc_Keys'
+
+
+def setup_database():
+    """Add latitude and longitude columns to Loc_Keys table if not already present."""
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS SoccerArenas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            latitude REAL,
-            longitude REAL
-        )
-    ''')
+
+    # Attempt to add 'latitude' column
+    try:
+        cursor.execute(f"ALTER TABLE {TABLE_NAME} ADD COLUMN latitude REAL")
+        print(f"Added 'latitude' column to '{TABLE_NAME}' table.")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column name' in str(e).lower():
+            print(f"'latitude' column already exists in '{TABLE_NAME}' table.")
+        else:
+            print(f"Error adding 'latitude' column: {e}")
+
+    # Attempt to add 'longitude' column
+    try:
+        cursor.execute(f"ALTER TABLE {TABLE_NAME} ADD COLUMN longitude REAL")
+        print(f"Added 'longitude' column to '{TABLE_NAME}' table.")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column name' in str(e).lower():
+            print(f"'longitude' column already exists in '{TABLE_NAME}' table.")
+        else:
+            print(f"Error adding 'longitude' column: {e}")
+
     conn.commit()
     conn.close()
 
-# Function to get latitude and longitude using Google Places API
-def get_coordinates(arena_name):
-    url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+
+def get_coordinates(city_name):
+    """Fetch coordinates for a city using Google Places API."""
+    url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
     params = {
-        'input': arena_name,
+        'input': city_name,
         'inputtype': 'textquery',
         'fields': 'geometry',
         'key': API_KEY
     }
-    response = requests.get(url, params=params)
-    data = response.json()
 
-    if data['status'] == 'OK':
-        location = data['candidates'][0]['geometry']['location']
-        return location['lat'], location['lng']
-    else:
-        print(f"Error fetching data for {arena_name}: {data['status']}")
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data['status'] == 'OK' and data['candidates']:
+            location = data['candidates'][0]['geometry']['location']
+            return location['lat'], location['lng']
+        else:
+            print(f"Error fetching data for '{city_name}': {data.get('status', 'No status')}")
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Request exception for '{city_name}': {e}")
         return None, None
 
-# Function to store arena data in the database
-def store_in_database(arena_name, latitude, longitude):
-    conn = sqlite3.connect('soccer_arenas.db')
+
+def update_coordinates(city_id, latitude, longitude):
+    """Update latitude and longitude for a city in the Loc_Keys table."""
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO SoccerArenas (name, latitude, longitude)
-        VALUES (?, ?, ?)
-    ''', (arena_name, latitude, longitude))
+
+    cursor.execute(f'''
+        UPDATE {TABLE_NAME}
+        SET latitude = ?, longitude = ?
+        WHERE id = ?
+    ''', (latitude, longitude, city_id))
+
     conn.commit()
     conn.close()
 
-# Main function to process arena names
-def main():
-    setup_coor_database()
-    print("Enter soccer arena names (type 'exit' to finish):")
 
-    while True:
-        arena_name = input("Arena Name: ")
-        if arena_name.lower() == 'exit':
-            break
+def process_cities():
+    """Fetch and update coordinates for cities without latitude/longitude."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
-        latitude, longitude = get_coordinates(arena_name)
+    # Fetch cities without coordinates
+    cursor.execute(f'''
+        SELECT id, location FROM {TABLE_NAME}
+        WHERE latitude IS NULL OR longitude IS NULL
+    ''')
+    cities = cursor.fetchall()
+    conn.close()
+
+    if not cities:
+        print("All cities already have coordinates.")
+        return
+
+    print(f"Processing {len(cities)} cities...")
+
+    for city_id, city_name in cities:
+        print(f"Fetching coordinates for '{city_name}'...")
+        latitude, longitude = get_coordinates(city_name)
+
         if latitude is not None and longitude is not None:
-            store_in_database(arena_name, latitude, longitude)
-            print(f"Stored {arena_name} with coordinates ({latitude}, {longitude})")
+            update_coordinates(city_id, latitude, longitude)
+            print(f"Stored '{city_name}' with coordinates ({latitude}, {longitude})\n")
         else:
-            print(f"Failed to get coordinates for {arena_name}")
+            print(f"Failed to get coordinates for '{city_name}'.\n")
+
+
+def main():
+    """Main entry point."""
+    setup_database()
+    process_cities()
+
 
 if __name__ == "__main__":
     main()
