@@ -1,4 +1,5 @@
 import os
+import os
 import requests
 import sqlite3
 
@@ -33,7 +34,12 @@ def setup_database():
 def get_coordinates(city_name):
     """Fetch coordinates for a city using Google Places API."""
     url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+
+def get_coordinates(city_name):
+    """Fetch coordinates for a city using Google Places API."""
+    url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
     params = {
+        'input': city_name,
         'input': city_name,
         'inputtype': 'textquery',
         'fields': 'geometry',
@@ -44,6 +50,19 @@ def get_coordinates(city_name):
         response = requests.get(url, params=params)
         data = response.json()
 
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data['status'] == 'OK' and data['candidates']:
+            location = data['candidates'][0]['geometry']['location']
+            return location['lat'], location['lng']
+        else:
+            print(f"Error fetching data for '{city_name}': {data.get('status', 'No status')}")
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Request exception for '{city_name}': {e}")
         if data['status'] == 'OK' and data['candidates']:
             location = data['candidates'][0]['geometry']['location']
             return location['lat'], location['lng']
