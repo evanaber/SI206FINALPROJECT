@@ -54,8 +54,8 @@ def weather_api(date, latitude, longitude, cur, conn):
 
 #h= set_up_db('football_weather')
 cur, conn = set_up_db("football_weather.db")
-#weather_api('2024-11-15', 42.27, -83.73,cur, conn) 
-#weather_api('2024-11-15', 50, -99,cur, conn) 
+weather_api('2024-11-15', 42.27, -83.73,cur, conn) 
+weather_api('2024-11-15', 50, -99,cur, conn) 
 #not sure if duplicate data will be a problem 
 #we take out some of the code when combined 
  
