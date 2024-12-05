@@ -33,13 +33,14 @@ def set_api(link):
     return responses
 
 #are we not supposed to use these?
-
+'''
 cur.execute(
    'DROP TABLE Date_Keys'
 )
 cur.execute(
    'DROP TABLE Scores'
 )
+'''
 
 cur.execute(
     "CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)"
@@ -145,6 +146,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-#get match
-#get date and score from match
