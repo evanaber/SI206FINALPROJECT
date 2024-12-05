@@ -7,6 +7,7 @@ API_KEY = 'AIzaSyA1lp0cMVLR6lUM6k_IAR_E16PYu33XEkc'
 DATABASE = 'fb_scores.db'
 TABLE_NAME = 'Loc_Keys'
 
+#hello
 
 def setup_database():
     """Add latitude and longitude columns to Loc_Keys table if not already present."""
