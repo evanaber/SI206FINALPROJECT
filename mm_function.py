@@ -13,12 +13,11 @@ def set_up_db(db_name):
 
 cur, conn = set_up_db("fb_scores.db")
 
+            
 def weather_api():
+    cur.execute("CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)")
     cur.execute(
-    "CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)"
-)
-    cur.execute(
-    "CREATE TABLE IF NOT EXISTS Weather (date_id INTEGER, latitude FLOAT, longitude FLOAT, elevation FLOAT, temperature FLOAT, precipitation FLOAT)"
+    "CREATE TABLE IF NOT EXISTS Weather (game_id INTEGER, date_id INTEGER, latitude FLOAT, longitude FLOAT, elevation FLOAT, temperature FLOAT, precipitation FLOAT)"
 )
     cur.execute(
         'SELECT latitude FROM Game_Locations'
@@ -32,6 +31,10 @@ def weather_api():
         'SELECT date_id FROM Game_Locations'
     )
     date_ids = cur.fetchall()
+    cur.execute(
+        'SELECT game_num FROM Game_Locations'
+    )
+    game_ids = cur.fetchall()
     try:
         cur.execute(
             'SELECT COUNT(date_id) FROM Weather'
@@ -46,7 +49,8 @@ def weather_api():
         'SELECT date FROM Date_Keys WHERE id = ?', (date_ids[index][0],))
         date = cur.fetchone()[0]
         latitude =latitudes[index][0]
-        longitude = longitudes[index][0]    
+        longitude = longitudes[index][0]  
+        game_id = game_ids[index][0]  
         url = "https://archive-api.open-meteo.com/v1/archive"
         querystring = {"latitude": latitude, "longitude": longitude, "start_date": date, "end_date": date, "daily": ["temperature_2m_mean", "precipitation_sum"], "temperature_unit": "fahrenheit"}
         response = requests.get(url, params=querystring)
@@ -70,8 +74,8 @@ def weather_api():
             cur.execute('SELECT id FROM Date_Keys WHERE date = ?', (date,))
             date_id = cur.fetchone()[0] 
         cur.execute(
-                "INSERT INTO Weather (date_id, latitude, longitude, elevation, temperature, precipitation) VALUES (?,?,?,?,?,?)",
-                (date_id, latitude, longitude, elevation, temperature, precipitation)
+                "INSERT INTO Weather (game_id, date_id, latitude, longitude, elevation, temperature, precipitation) VALUES (?,?,?,?,?,?,?)",
+                (game_id, date_id, latitude, longitude, elevation, temperature, precipitation)
             )
         conn.commit()
 

@@ -50,10 +50,6 @@ def get_coordinates(city_name):
         response = requests.get(url, params=params)
         data = response.json()
 
-    try:
-        response = requests.get(url, params=params)
-        data = response.json()
-
         if data['status'] == 'OK' and data['candidates']:
             location = data['candidates'][0]['geometry']['location']
             return location['lat'], location['lng']
