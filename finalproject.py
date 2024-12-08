@@ -31,15 +31,16 @@ def set_api(link):
     responses = response.json()
     return responses
 
-# Create tables, dropping them first if they already exist
-cur.execute("DROP TABLE IF EXISTS Date_Keys")
-cur.execute("DROP TABLE IF EXISTS Scores")
-cur.execute("DROP TABLE IF EXISTS Loc_Keys")
 
-cur.execute("CREATE TABLE Date_Keys (id INTEGER PRIMARY KEY, date TEXT)")
-cur.execute("CREATE TABLE Scores (game_num INTEGER PRIMARY KEY, date INTEGER, t_score INTEGER, location INTEGER)")
-cur.execute("CREATE TABLE Loc_Keys (id INTEGER PRIMARY KEY, location TEXT)")
-
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS Date_Keys (id INTEGER PRIMARY KEY, date TEXT)"
+)
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS Scores (game_num INTEGER PRIMARY KEY, date INTEGER, t_score INTEGER, location INTEGER)"
+)
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS Loc_Keys (id INTEGER PRIMARY KEY, location TEXT)"
+)
 #total score keeps getting too high because we are running the same dates over and over again. 
 #I need to access new ones and reset the database each time we run the code from the beginning
 
@@ -134,7 +135,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#get match
-#get date and score from match

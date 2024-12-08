@@ -96,8 +96,8 @@ def process_game_locations():
 
 def main():
     """Main entry point."""
-    setup_database()  # Ensure the new table exists
-    process_game_locations()  # Populate the new game locations table
+    setup_database()
+    process_game_locations()
 
 
 if __name__ == "__main__":
