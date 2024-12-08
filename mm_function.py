@@ -79,7 +79,6 @@ def weather_api():
             )
         conn.commit()
 
-
 def main():
     weather_api()
    
