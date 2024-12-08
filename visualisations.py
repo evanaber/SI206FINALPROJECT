@@ -41,6 +41,7 @@ ax.set_xlabel("Date")
 #makes it so you only view every 6th tickmark for readability
 ax.set_xticks(days[::6])
 ax.set_ylabel("Total Combined Score")
+ax.set_title('Score vs Date')
 plt.savefig('score_vs_date.png') 
 plt.show()
 
