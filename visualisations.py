@@ -59,7 +59,7 @@ for temp in temps:
 #print(temps_list)
 #print(scores)
 fig, ax = plt.subplots()
-ax.scatter(temps_list, scores_list)
+ax.scatter(temps_list, scores_list, color = 'black')
 ax.set_ylabel('Score')
 ax.set_xlabel('Average Daily Temperature')
 ax.set_title('Score vs Average Daily Temperature') 
@@ -79,7 +79,7 @@ for temp in temps:
     elevation_list.append(elevations[i][0])
     i+=1
 fig, ax = plt.subplots()
-ax.scatter(temps_list, elevation_list)
+ax.scatter(temps_list, elevation_list, color = 'purple')
 ax.set_xlabel('Elevation')
 ax.set_ylabel('Average Daily Temperature')
 ax.set_title('Average Daily Temperature vs Elevation') 
@@ -98,7 +98,7 @@ for precipitation in precipitations:
     scores_list.append(scores[i][0])
     i+=1
 fig, ax = plt.subplots()
-ax.scatter(scores_list, precipitation_list)
+ax.scatter(scores_list, precipitation_list, color = 'red')
 ax.set_xlabel('Score')
 ax.set_ylabel('Daily Precipitation')
 ax.set_title('Daily Precipitation vs Score') 
