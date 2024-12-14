@@ -39,7 +39,7 @@ fig, ax = plt.subplots()
 ax.scatter(days, daily_scores)
 ax.set_xlabel("Date")
 #makes it so you only view every 6th tickmark for readability
-ax.set_xticks(days[::10])
+ax.set_xticks(days[::15])
 ax.set_ylabel("Total Combined Score")
 ax.set_title('Score vs Date')
 plt.savefig('score_vs_date.png') 
